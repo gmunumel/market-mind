@@ -1,0 +1,61 @@
+{
+  "name": "Market Mind Workspace",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/sshd:1": {}
+  },
+  "workspaceFolder": "/workspaces/market-mind",
+  "onCreateCommand": "[ -f /app/.aliases.sh ] && cat /app/.aliases.sh >> ~/.bashrc",
+  "postCreateCommand": "bash -lc \"pip install uv && cd backend && uv sync && cd ../frontend && npm install\"",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "./backend/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "editor.formatOnSave": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/.pytest_cache": true
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.mypy-type-checker",
+        "charliermarsh.ruff",
+        "ms-azuretools.vscode-docker",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "streetsidesoftware.code-spell-checker",
+        "openai.chatgpt",
+        "vscodevim.vim"
+      ]
+    }
+  },
+  "forwardPorts": [5173, 8000, 5432],
+  "portsAttributes": {
+    "5173": {
+      "label": "Frontend"
+    },
+    "8000": {
+      "label": "Backend API"
+    },
+    "5432": {
+      "label": "PostgreSQL"
+    }
+  },
+  "remoteUser": "codespace",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=${localWorkspaceFolder}/,target=/app/,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.codex,target=/root/.codex,type=bind,consistency=cached"
+  ]
+}

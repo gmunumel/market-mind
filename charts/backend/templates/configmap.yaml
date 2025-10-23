@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-config
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent(4) }}
+data:
+  OPENAI_MODEL: {{ .Values.env.OPENAI_MODEL | quote }}
+  DATABASE_URL: {{ .Values.env.DATABASE_URL | quote }}
+  CHROMA_PERSIST_DIRECTORY: {{ .Values.env.CHROMA_PERSIST_DIRECTORY | quote }}
+  FRONTEND_ORIGIN: {{ .Values.env.FRONTEND_ORIGIN | quote }}
+  HOURLY_REQUEST_LIMIT: {{ .Values.env.HOURLY_REQUEST_LIMIT | quote }}
+  DAILY_REQUEST_LIMIT: {{ .Values.env.DAILY_REQUEST_LIMIT | quote }}
+  LANGFUSE_HOST: {{ .Values.env.LANGFUSE_HOST | quote }}

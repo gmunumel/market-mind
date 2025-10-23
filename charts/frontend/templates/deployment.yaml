@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "market-mind-frontend.fullname" . }}
+  labels:
+    {{- include "market-mind-frontend.labels" . | nindent(4) }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "market-mind-frontend.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "market-mind-frontend.labels" . | nindent(8) }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          env:
+            - name: VITE_API_URL
+              value: {{ .Values.env.VITE_API_URL | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent(12) }}

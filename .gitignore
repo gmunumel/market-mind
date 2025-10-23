@@ -1,0 +1,40 @@
+# Python artifacts
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.python-version
+.venv
+.virtualenv
+backend/.venv/
+backend/.pytest_cache/
+backend/.mypy_cache/
+
+# Node artifacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+
+# Logs & build
+*.log
+build/
+dist/
+
+# Environment files
+.env
+!.env.example
+.env.local
+
+# Editors & tooling
+.vscode/
+.idea/
+.DS_Store
+
+# Project-specific
+beetroot_backend.egg-info/
+.aliases.sh

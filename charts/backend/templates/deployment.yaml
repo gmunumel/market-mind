@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent(4) }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "market-mind-backend.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "market-mind-backend.labels" . | nindent(8) }}
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ include "market-mind-backend.fullname" . }}-config
+            - secretRef:
+                name: {{ include "market-mind-backend.fullname" . }}-secrets
+          volumeMounts:
+            - name: chroma-storage
+              mountPath: /data/chroma
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            {{- toYaml .Values.resources | nindent(12) }}
+      volumes:
+        - name: chroma-storage
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "market-mind-backend.fullname" . }}-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
