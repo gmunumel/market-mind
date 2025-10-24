@@ -33,3 +33,12 @@ export async function sendMessage(chatId: string, content: string): Promise<Chat
   const { data } = await api.post<ChatResponse>(`/chats/${chatId}/messages`, { content });
   return data;
 }
+
+export async function deleteChat(chatId: string): Promise<void> {
+  await api.delete(`/chats/${chatId}`);
+}
+
+export async function refreshChatTitle(chatId: string): Promise<ChatSession> {
+  const { data } = await api.post<ChatSession>(`/chats/${chatId}/title`);
+  return data;
+}

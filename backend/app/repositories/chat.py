@@ -15,9 +15,10 @@ class ChatRepository:
         self.session = session
 
     def create_session(self, title: str | None = None) -> ChatSession:
-        chat = ChatSession(title=title or "Untitled Chat")
+        chat = ChatSession(title=title or "Market Mind Chat")
         self.session.add(chat)
-        self.session.flush()
+        self.session.commit()
+        self.session.refresh(chat)
         return chat
 
     def list_sessions(self) -> Sequence[ChatSession]:
@@ -27,6 +28,24 @@ class ChatRepository:
     def get_session(self, chat_id: str) -> ChatSession | None:
         return self.session.get(ChatSession, chat_id)
 
+    def delete_session(self, chat_id: str) -> bool:
+        chat = self.get_session(chat_id)
+        if not chat:
+            return False
+        self.session.delete(chat)
+        self.session.commit()
+        return True
+
+    def update_session_title(self, chat_id: str, title: str) -> ChatSession | None:
+        chat = self.get_session(chat_id)
+        if not chat:
+            return None
+        chat.title = title
+        self.session.add(chat)
+        self.session.commit()
+        self.session.refresh(chat)
+        return chat
+
     def add_message(
         self,
         chat_id: str,
@@ -34,9 +53,15 @@ class ChatRepository:
         content: str,
         metadata: dict | None = None,
     ) -> Message:
-        message = Message(chat_session_id=chat_id, role=role, content=content, metadata=metadata)
+        message = Message(
+            chat_session_id=chat_id,
+            role=role,
+            content=content,
+            message_metadata=metadata,
+        )
         self.session.add(message)
-        self.session.flush()
+        self.session.commit()
+        self.session.refresh(message)
         return message
 
     def list_messages(self, chat_id: str) -> Sequence[Message]:

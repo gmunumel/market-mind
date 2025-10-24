@@ -64,7 +64,7 @@ For local development outside Docker, set `DATABASE_URL` to your host Postgres c
 3. **Frontend**
    ```bash
    cd frontent
-  npm install
+   npm install
    npm run dev
    ```
 
@@ -97,7 +97,7 @@ Override environment variables by editing `.env` before starting Compose.
 
 1. Install the **Dev Containers** extension.
 2. Open the repository in VS Code and select **Reopen in Container**.
-3. The container pre-installs Python 3.12, Node 20, uv, project dependencies, and recommended extensions.
+3. The container pre-installs Python 3.12, Node 20, uv, project dependencies, and recommended extensions. Docker Compose brings up the `postgres` and `chroma` services automatically; other services can be started manually as needed.
 
 After launch:
 

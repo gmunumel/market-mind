@@ -14,7 +14,7 @@ class ChatSession(Base):
     __tablename__ = "chat_sessions"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    title: Mapped[str] = mapped_column(String(255), default="Untitled Chat")
+    title: Mapped[str] = mapped_column(String(255), default="Market Mind Chat")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now(), onupdate=func.now()
@@ -31,6 +31,6 @@ class Message(Base):
     role: Mapped[str] = mapped_column(String(20))
     content: Mapped[str] = mapped_column(Text())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
-    metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    message_metadata: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
 
     session: Mapped[ChatSession] = relationship("ChatSession", back_populates="messages")

@@ -47,6 +47,17 @@ services:
     ports:
       - "5173:80"
 
+  devcontainer:
+    image: python:3.12-bookworm
+    volumes:
+      - .:/workspaces/market-mind:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sleep infinity
+    user: root
+    depends_on:
+      - postgres
+      - chroma
+
 volumes:
   postgres_data:
   chroma_data:

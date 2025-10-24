@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import api_router
 from app.core.config import get_settings
-from app.core.logging import get_logger
+from app.core.logging import logger as app_logger
 from app.db import Base, engine
 
-logger = get_logger(__name__)
+logger = app_logger.getChild(__name__)
 settings = get_settings()
 
 app = FastAPI(

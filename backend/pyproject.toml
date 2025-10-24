@@ -16,13 +16,14 @@ dependencies = [
     "langchain-community>=0.0.38",
     "langchain-openai>=0.1.6",
     "langgraph>=0.0.57",
-    "duckduckgo-search>=5.2.2",
-    "chromadb>=0.4.24",
     "python-dotenv>=1.0.1",
     "httpx>=0.27.0",
     "cachetools>=5.3.3",
     "langfuse>=2.30.1",
     "tenacity>=8.2.3",
+    "langchain-chroma>=1.0.0",
+    "duckduckgo-search>=8.1.1",
+    "ddgs>=9.6.1",
 ]
 
 [project.optional-dependencies]
@@ -32,8 +33,8 @@ test = [
     "pytest-mock>=3.14.0",
 ]
 
-[tool.uv]
-dev-dependencies = ["market-mind-backend[test]"]
+[project.dependency-groups.dev]
+dependencies = ["market-mind-backend[test]"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

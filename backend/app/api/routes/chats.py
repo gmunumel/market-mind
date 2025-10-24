@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_rate_limiter
@@ -51,6 +51,39 @@ def get_chat(chat_id: str, db: Session = Depends(get_db)) -> ChatSessionDetail:
         **ChatSessionResponse.model_validate(chat).model_dump(),
         messages=[MessageResponse.model_validate(m) for m in repo.list_messages(chat_id)],
     )
+
+
+@router.delete("/{chat_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_chat(chat_id: str, db: Session = Depends(get_db)) -> Response:
+    repo = ChatRepository(db)
+    deleted = repo.delete_session(chat_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{chat_id}/title", response_model=ChatSessionResponse)
+def refresh_chat_title(chat_id: str, db: Session = Depends(get_db)) -> ChatSessionResponse:
+    repo = ChatRepository(db)
+    chat = repo.get_session(chat_id)
+    if not chat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+
+    messages = repo.list_messages(chat_id)
+    if not messages:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot generate a title without conversation history.",
+        )
+
+    recent_messages = list(messages)[-12:]
+    history_text = "\n".join(f"{msg.role}: {msg.content}" for msg in recent_messages)
+    title = agent_service.suggest_title(history_text)
+
+    updated = repo.update_session_title(chat_id, title)
+    if not updated:  # pragma: no cover - defensive
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update chat title.")
+    return ChatSessionResponse.model_validate(updated)
 
 
 @router.post("/{chat_id}/messages", response_model=ChatResponse)

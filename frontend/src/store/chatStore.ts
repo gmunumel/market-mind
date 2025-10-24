@@ -1,5 +1,12 @@
 import { create } from "zustand";
-import { fetchChatById, fetchChats, createChat as createChatApi, sendMessage as sendMessageApi } from "@/lib/api";
+import {
+  fetchChatById,
+  fetchChats,
+  createChat as createChatApi,
+  sendMessage as sendMessageApi,
+  deleteChat as deleteChatApi,
+  refreshChatTitle as refreshChatTitleApi
+} from "@/lib/api";
 import type { ChatSession, ChatResponse } from "@/types/chat";
 
 type ThemeMode = "light" | "dark";
@@ -15,6 +22,7 @@ interface ChatState {
   createChat: (title?: string) => Promise<void>;
   selectChat: (chatId: string) => Promise<void>;
   sendMessage: (content: string) => Promise<ChatResponse | null>;
+  deleteChat: (chatId: string) => Promise<void>;
   toggleTheme: () => void;
 }
 
@@ -78,6 +86,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
+  deleteChat: async (chatId: string) => {
+    set({ loading: true, error: null });
+    try {
+      await deleteChatApi(chatId);
+      const state = get();
+      const { [chatId]: _removed, ...remainingChats } = state.chats;
+      const updatedOrder = state.chatOrder.filter((id) => id !== chatId);
+      const nextActive = state.activeChatId === chatId ? updatedOrder[0] ?? null : state.activeChatId;
+
+      set({
+        chats: remainingChats,
+        chatOrder: updatedOrder,
+        activeChatId: nextActive,
+        loading: false
+      });
+
+      if (nextActive && !remainingChats[nextActive]?.messages?.length) {
+        await get().selectChat(nextActive);
+      }
+    } catch (error) {
+      set({ error: "Failed to delete chat. Please try again.", loading: false });
+    }
+  },
+
   selectChat: async (chatId: string) => {
     set({ activeChatId: chatId, error: null });
     const chat = get().chats[chatId];
@@ -92,6 +124,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
           [chatId]: { ...state.chats[chatId], ...detailed }
         }
       }));
+      const needsTitleRefresh =
+        (!detailed.title || detailed.title.toLowerCase().includes("market mind chat")) &&
+        (detailed.messages?.length ?? 0) > 0;
+      if (needsTitleRefresh) {
+        try {
+          const updated = await refreshChatTitleApi(chatId);
+          set((state) => ({
+            chats: {
+              ...state.chats,
+              [chatId]: {
+                ...state.chats[chatId],
+                title: updated.title,
+                updated_at: updated.updated_at
+              }
+            }
+          }));
+        } catch (_error) {
+          // Ignore title refresh errors during selection; fallback title will be used.
+        }
+      }
     } catch (error) {
       set({ error: "Unable to load conversation history." });
     }
@@ -124,6 +176,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
           loading: false
         };
       });
+      try {
+        const updated = await refreshChatTitleApi(chatId);
+        set((state) => ({
+          chats: {
+            ...state.chats,
+            [chatId]: {
+              ...state.chats[chatId],
+              title: updated.title,
+              updated_at: updated.updated_at
+            }
+          }
+        }));
+      } catch (_error) {
+        // Non-critical failure: keep existing title if refresh fails.
+      }
       return response;
     } catch (error) {
       set({ error: "Failed to send message. Please try again.", loading: false });

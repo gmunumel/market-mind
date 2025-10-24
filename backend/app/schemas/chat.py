@@ -29,7 +29,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
-    metadata: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = Field(default=None, validation_alias="message_metadata")
 
     class Config:
         from_attributes = True

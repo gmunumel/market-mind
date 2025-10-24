@@ -1,10 +1,10 @@
 {
   "name": "Market Mind Workspace",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "devcontainer",
+  "runServices": ["postgres", "chroma"],
+  "shutdownAction": "none",
   "features": {
-    "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.12"
-    },
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
     },
@@ -12,8 +12,12 @@
     "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "workspaceFolder": "/workspaces/market-mind",
-  "onCreateCommand": "[ -f /app/.aliases.sh ] && cat /app/.aliases.sh >> ~/.bashrc",
-  "postCreateCommand": "bash -lc \"pip install uv && cd backend && uv sync && cd ../frontend && npm install\"",
+  "onCreateCommand": "if [ -f /workspaces/market-mind/.aliases.sh ]; then cat /workspaces/market-mind/.aliases.sh >> ~/.bashrc; fi",
+  "postCreateCommand": "bash -lc \"pip install --upgrade pip && pip install uv && cd backend && uv sync && cd ../frontend && npm install -g npm@11.6.2 && npm install\"",
+  "remoteEnv": {
+    "DATABASE_URL": "postgresql+psycopg://market_mind:market_mind@postgres:5432/market_mind",
+    "CHROMA_PERSIST_DIRECTORY": "/data/chroma"
+  },
   "customizations": {
     "vscode": {
       "settings": {
@@ -52,7 +56,6 @@
       "label": "PostgreSQL"
     }
   },
-  "remoteUser": "codespace",
   "mounts": [
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
     "source=${localWorkspaceFolder}/,target=/app/,type=bind,consistency=cached",
