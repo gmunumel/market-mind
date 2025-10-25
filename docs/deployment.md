@@ -74,6 +74,28 @@ kubectl rollout status deploy/market-mind-backend-market-mind-backend -n market-
 kubectl rollout status deploy/market-mind-frontend-market-mind-frontend -n market-mind
 ```
 
+### All together
+
+```
+docker build -t gabrielmunumel/market-mind-backend:latest -f backend/Dockerfile ./backend
+docker push gabrielmunumel/market-mind-backend:latest
+helm upgrade --install market-mind-backend ./charts/backend \
+  -n market-mind \
+  --set image.repository=gabrielmunumel/market-mind-backend \
+  --set image.tag=latest \
+  --set image.pullPolicy=Always
+kubectl rollout restart deployment/market-mind-backend-market-mind-backend -n market-mind
+
+docker build -t gabrielmunumel/market-mind-frontend:latest -f frontend/Dockerfile ./frontend
+docker push gabrielmunumel/market-mind-frontend:latest
+helm upgrade --install market-mind-frontend ./charts/frontend \
+  -n market-mind \
+  --set image.repository=gabrielmunumel/market-mind-frontend \
+  --set image.tag=latest \
+  --set image.pullPolicy=Always
+kubectl rollout restart deployment/market-mind-frontend-market-mind-frontend -n market-mind
+```
+
 ## Monitoring
 
 1. Check pods are running

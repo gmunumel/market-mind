@@ -80,8 +80,6 @@ ingress:
           pathType: Prefix
         - path: /api
           pathType: Prefix
-        #- path: /api(/|$)(.*)
-        #  pathType: Prefix
 
   tls:
     - hosts:
