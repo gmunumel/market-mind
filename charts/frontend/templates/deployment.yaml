@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "market-mind-frontend.fullname" . }}
   labels:
-    {{- include "market-mind-frontend.labels" . | nindent(4) }}
+    {{- include "market-mind-frontend.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "market-mind-frontend.labels" . | nindent(8) }}
+        {{- include "market-mind-frontend.labels" . | nindent 8 }}
     spec:
       containers:
         - name: frontend
@@ -26,4 +26,4 @@ spec:
             - name: VITE_API_URL
               value: {{ .Values.env.VITE_API_URL | quote }}
           resources:
-            {{- toYaml .Values.resources | nindent(12) }}
+            {{- toYaml .Values.resources | nindent 12 }}

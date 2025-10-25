@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Trash2 } from "lucide-react";
 import { useChatStore } from "@/store/chatStore";
 import type { Message } from "@/types/chat";
 import { CHAT_INPUT_PLACEHOLDER, CHAT_SUGGESTIONS } from "@/prompts/chatPrompts";
@@ -44,10 +45,11 @@ const markdownComponents: Components = {
 };
 
 export function ChatWindow() {
-  const { activeChatId, chats, sendMessage, loading, error } = useChatStore((state) => ({
+  const { activeChatId, chats, sendMessage, deleteChat, loading, error } = useChatStore((state) => ({
     activeChatId: state.activeChatId,
     chats: state.chats,
     sendMessage: state.sendMessage,
+    deleteChat: state.deleteChat,
     loading: state.loading,
     error: state.error
   }));
@@ -64,6 +66,13 @@ export function ChatWindow() {
   const handleSuggestionSelect = (prompt: string) => {
     setMessage(prompt);
     textareaRef.current?.focus();
+  };
+
+  const handleDeleteChat = async () => {
+    if (!activeChatId) return;
+    const confirmed = window.confirm("Delete this chat? This will remove the conversation permanently.");
+    if (!confirmed) return;
+    await deleteChat(activeChatId);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -137,10 +146,28 @@ export function ChatWindow() {
   return (
     <section className="flex h-full flex-1 flex-col bg-slate-100 dark:bg-slate-950">
       <header className="border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{activeChat?.title}</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Ask about stocks, crypto, macro data, or risk signals. Market Mind will respond with concise, data-backed insights.
-        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{activeChat?.title}</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Ask about stocks, crypto, macro data, or risk signals. Market Mind will respond with concise, data-backed insights.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleDeleteChat}
+            disabled={loading}
+            className={clsx(
+              "inline-flex items-center gap-2 rounded-md border border-transparent px-3 py-2 text-xs font-medium text-red-500 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:cursor-not-allowed disabled:opacity-60",
+              !loading &&
+                "hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:hover:border-red-700 dark:hover:bg-red-950 dark:hover:text-red-300"
+            )}
+            title="Delete chat"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </button>
+        </div>
       </header>
       <div className="flex-1 overflow-y-auto px-6 py-6">
         {conversation.length === 0 ? (

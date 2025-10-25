@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/example/market-mind-backend
+  repository: gabrielmunumel/market-mind-backend
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -11,10 +11,16 @@ service:
 
 resources: {}
 
+# Chroma service URL (cluster-internal)
+chroma:
+  url: http://chroma:8000
+
 env:
+  # Sensitive values should not be committed to values.yaml. Leave empty and provide
+  # sensitive data via a Kubernetes Secret (recommended) or enable createSecret.
   OPENAI_API_KEY: ""
   OPENAI_MODEL: "gpt-4o"
-  DATABASE_URL: "postgresql+psycopg://market_mind:market_mind@postgresql:5432/market_mind"
+  DATABASE_URL: ""
   CHROMA_PERSIST_DIRECTORY: /data/chroma
   FRONTEND_ORIGIN: "http://market-mind-frontend"
   LANGFUSE_PUBLIC_KEY: ""
@@ -29,12 +35,55 @@ persistence:
     - ReadWriteOnce
   size: 5Gi
 
+# Postgres (managed by this chart when enabled)
+postgres:
+  enabled: true
+  #useExistingSecret: market-mind-backend-market-mind-backend-postgres
+  image:
+    repository: postgres
+    tag: 15-alpine
+  port: 5432
+  user: market_mind
+  password: market_mind 
+  database: market_mind
+  persistence:
+    enabled: true
+    size: 5Gi
+
+# Chroma (managed by this chart when enabled)
+chromaService:
+  enabled: true
+  image:
+    repository: ghcr.io/chroma-core/chroma
+    tag: 0.4.24
+  port: 8000
+  allowReset: "TRUE"
+  persistence:
+    enabled: true
+    size: 5Gi
+
+# Secret creation options
+createSecret: false
+# If you set existingSecretName, the Deployment will reference that Secret for runtime
+# env (OPENAI_API_KEY, DATABASE_URL, CHROMA_URL, LANGFUSE_*). Useful when you create
+# the secret externally with kubectl or a sealed-secrets controller.
+existingSecretName: ""
+
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  spec:
+    ingressClassName: nginx
   hosts:
-    - host: backend.local
+    - host: market-mind.stackedge.dev
       paths:
-        - path: /
+        - path: /health
           pathType: Prefix
-  tls: []
+        - path: /api
+          pathType: Prefix
+        #- path: /api(/|$)(.*)
+        #  pathType: Prefix
+
+  tls:
+    - hosts:
+        - market-mind.stackedge.dev
+      secretName: market-mind-tls

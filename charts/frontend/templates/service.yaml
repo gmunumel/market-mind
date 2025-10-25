@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: {{ include "market-mind-frontend.fullname" . }}
   labels:
-    {{- include "market-mind-frontend.labels" . | nindent(4) }}
+    {{- include "market-mind-frontend.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
   selector:

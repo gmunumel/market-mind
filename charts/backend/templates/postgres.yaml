@@ -1,0 +1,94 @@
+{{- if .Values.postgres.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-postgres
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  POSTGRES_DB: {{ .Values.postgres.database | quote }}
+  POSTGRES_USER: {{ .Values.postgres.user | quote }}
+  POSTGRES_PASSWORD: {{ if .Values.postgres.password }}{{ .Values.postgres.password | quote }}{{ else }}{{ randAlphaNum 16 | quote }}{{ end }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-postgres
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "market-mind-backend.fullname" . }}-postgres
+  template:
+    metadata:
+      labels:
+        app: {{ include "market-mind-backend.fullname" . }}-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.postgres.port }}
+          env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+      volumes: 
+        - name: pgdata
+          {{- if .Values.postgres.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "market-mind-backend.fullname" . }}-pgdata
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+
+---
+{{- if .Values.postgres.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-pgdata
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.postgres.persistence.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-postgres
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.postgres.port }}
+      targetPort: {{ .Values.postgres.port }}
+  selector:
+    app: {{ include "market-mind-backend.fullname" . }}-postgres
+
+{{- end }}

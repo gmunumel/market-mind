@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ include "market-mind-backend.fullname" . }}-config
   labels:
-    {{- include "market-mind-backend.labels" . | nindent(4) }}
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
 data:
   OPENAI_MODEL: {{ .Values.env.OPENAI_MODEL | quote }}
   DATABASE_URL: {{ .Values.env.DATABASE_URL | quote }}

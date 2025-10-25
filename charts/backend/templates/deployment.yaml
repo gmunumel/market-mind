@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "market-mind-backend.fullname" . }}
   labels:
-    {{- include "market-mind-backend.labels" . | nindent(4) }}
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "market-mind-backend.labels" . | nindent(8) }}
+        {{- include "market-mind-backend.labels" . | nindent 8 }}
     spec:
       containers:
         - name: backend
@@ -22,28 +22,60 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
               name: http
+
           envFrom:
             - configMapRef:
                 name: {{ include "market-mind-backend.fullname" . }}-config
             - secretRef:
-                name: {{ include "market-mind-backend.fullname" . }}-secrets
+                name: {{ if .Values.existingSecretName }}{{ .Values.existingSecretName }}{{ else }}{{ include "market-mind-backend.fullname" . }}-secrets{{ end }}
+
+          env:
+            {{- if .Values.postgres.enabled }}
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "market-mind-backend.fullname" . }}-postgres
+                  key: POSTGRES_PASSWORD
+            - name: DATABASE_URL
+              value: >-
+                postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ include "market-mind-backend.fullname" . }}-postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}
+            {{- end }}
+            {{- if .Values.chromaService.enabled }}
+            - name: CHROMA_URL
+              value: {{ printf "http://%s:%d" (include "market-mind-backend.fullname" .) .Values.chromaService.port | quote }}
+            {{- end }}
+
           volumeMounts:
             - name: chroma-storage
               mountPath: /data/chroma
+
           readinessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 10
             periodSeconds: 15
+
           livenessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 30
             periodSeconds: 30
+
           resources:
-            {{- toYaml .Values.resources | nindent(12) }}
+            {{- toYaml .Values.resources | nindent 12 }}
+
       volumes:
         - name: chroma-storage
           {{- if .Values.persistence.enabled }}

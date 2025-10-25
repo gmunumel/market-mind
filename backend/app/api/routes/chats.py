@@ -19,7 +19,7 @@ from app.schemas import (
 )
 from app.services import AgentService
 
-router = APIRouter(prefix="/chats")
+router = APIRouter(prefix="/api/chats")
 
 settings = get_settings()
 agent_service = AgentService(settings=settings)
@@ -27,11 +27,14 @@ agent_service = AgentService(settings=settings)
 
 @router.get("/", response_model=list[ChatSessionResponse])
 def list_chats(db: Session = Depends(get_db)) -> list[ChatSessionResponse]:
+    print("Listing chat sessions")
     repo = ChatRepository(db)
     return [ChatSessionResponse.model_validate(chat) for chat in repo.list_sessions()]
 
 
-@router.post("/", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED
+)
 def create_chat(
     payload: ChatSessionCreate,
     db: Session = Depends(get_db),
@@ -46,10 +49,14 @@ def get_chat(chat_id: str, db: Session = Depends(get_db)) -> ChatSessionDetail:
     repo = ChatRepository(db)
     chat = repo.get_session(chat_id)
     if not chat:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+        )
     return ChatSessionDetail(
         **ChatSessionResponse.model_validate(chat).model_dump(),
-        messages=[MessageResponse.model_validate(m) for m in repo.list_messages(chat_id)],
+        messages=[
+            MessageResponse.model_validate(m) for m in repo.list_messages(chat_id)
+        ],
     )
 
 
@@ -58,16 +65,22 @@ def delete_chat(chat_id: str, db: Session = Depends(get_db)) -> Response:
     repo = ChatRepository(db)
     deleted = repo.delete_session(chat_id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+        )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post("/{chat_id}/title", response_model=ChatSessionResponse)
-def refresh_chat_title(chat_id: str, db: Session = Depends(get_db)) -> ChatSessionResponse:
+def refresh_chat_title(
+    chat_id: str, db: Session = Depends(get_db)
+) -> ChatSessionResponse:
     repo = ChatRepository(db)
     chat = repo.get_session(chat_id)
     if not chat:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+        )
 
     messages = repo.list_messages(chat_id)
     if not messages:
@@ -82,7 +95,10 @@ def refresh_chat_title(chat_id: str, db: Session = Depends(get_db)) -> ChatSessi
 
     updated = repo.update_session_title(chat_id, title)
     if not updated:  # pragma: no cover - defensive
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update chat title.")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update chat title.",
+        )
     return ChatSessionResponse.model_validate(updated)
 
 
@@ -97,12 +113,16 @@ def post_message(
     repo = ChatRepository(db)
     chat = repo.get_session(chat_id)
     if not chat:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Chat not found."
+        )
 
     identifier = user_id or chat_id
     limiter.check(identifier)
 
-    user_message = repo.add_message(chat_id=chat_id, role="user", content=payload.content)
+    user_message = repo.add_message(
+        chat_id=chat_id, role="user", content=payload.content
+    )
     agent_service.persist_memory(chat_id, "user", payload.content)
 
     history_messages = repo.list_messages(chat_id)

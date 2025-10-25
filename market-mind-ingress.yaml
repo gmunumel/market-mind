@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: market-mind-ingress
+  namespace: market-mind
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - market-mind.stackedge.dev
+      secretName: market-mind-tls
+  rules:
+    - host: market-mind.stackedge.dev
+      http:
+        paths:
+          - path: /portfolio/market-mind/
+            pathType: Prefix
+            backend:
+              service:
+                name: market-mind-frontend-market-mind-frontend
+                port:
+                  number: 80
+
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: market-mind-backend-market-mind-backend
+                port:
+                  number: 8000
+
+          - path: /health
+            pathType: Prefix
+            backend:
+              service:
+                name: market-mind-backend-market-mind-backend
+                port:
+                  number: 8000

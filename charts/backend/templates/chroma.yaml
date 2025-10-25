@@ -1,0 +1,68 @@
+{{- if .Values.chromaService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-chroma
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "market-mind-backend.fullname" . }}-chroma
+  template:
+    metadata:
+      labels:
+        app: {{ include "market-mind-backend.fullname" . }}-chroma
+    spec:
+      containers:
+        - name: chroma
+          image: "{{ .Values.chromaService.image.repository }}:{{ .Values.chromaService.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.chromaService.port }}
+          env:
+            - name: ALLOW_RESET
+              value: "{{ .Values.chromaService.allowReset }}"
+          volumeMounts:
+            - name: chroma-data
+              mountPath: /chroma/chroma
+      volumes:
+        - name: chroma-data
+          {{- if .Values.chromaService.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "market-mind-backend.fullname" . }}-chroma-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+
+---
+{{- if .Values.chromaService.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-chroma-pvc
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.chromaService.persistence.size }}
+{{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-chroma
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.chromaService.port }}
+      targetPort: {{ .Values.chromaService.port }}
+  selector:
+    app: {{ include "market-mind-backend.fullname" . }}-chroma
+
+{{- end }}

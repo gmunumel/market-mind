@@ -10,13 +10,14 @@ RUN npm install
 COPY src ./src
 COPY index.html ./index.html
 
-ARG VITE_API_URL=http://localhost:8000
+ARG VITE_API_URL=https://market-mind.stackedge.dev
 ENV VITE_API_URL=${VITE_API_URL}
 
 RUN npm run build
 
 FROM nginx:alpine AS production
 
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

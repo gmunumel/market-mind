@@ -15,30 +15,30 @@ api.interceptors.request.use((config) => {
 });
 
 export async function fetchChats(): Promise<ChatSession[]> {
-  const { data } = await api.get<ChatSession[]>("/chats");
+  const { data } = await api.get<ChatSession[]>("/api/chats");
   return data;
 }
 
 export async function fetchChatById(chatId: string): Promise<ChatSession> {
-  const { data } = await api.get<ChatSession>(`/chats/${chatId}`);
+  const { data } = await api.get<ChatSession>(`/api/chats/${chatId}`);
   return data;
 }
 
 export async function createChat(title?: string): Promise<ChatSession> {
-  const { data } = await api.post<ChatSession>("/chats", { title });
+  const { data } = await api.post<ChatSession>("/api/chats", { title });
   return data;
 }
 
 export async function sendMessage(chatId: string, content: string): Promise<ChatResponse> {
-  const { data } = await api.post<ChatResponse>(`/chats/${chatId}/messages`, { content });
+  const { data } = await api.post<ChatResponse>(`/api/chats/${chatId}/messages`, { content });
   return data;
 }
 
 export async function deleteChat(chatId: string): Promise<void> {
-  await api.delete(`/chats/${chatId}`);
+  await api.delete(`/api/chats/${chatId}`);
 }
 
 export async function refreshChatTitle(chatId: string): Promise<ChatSession> {
-  const { data } = await api.post<ChatSession>(`/chats/${chatId}/title`);
+  const { data } = await api.post<ChatSession>(`/api/chats/${chatId}/title`);
   return data;
 }

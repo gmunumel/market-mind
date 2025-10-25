@@ -38,3 +38,5 @@ dist/
 # Project-specific
 beetroot_backend.egg-info/
 .aliases.sh
+
+docs/deployment_command.sh

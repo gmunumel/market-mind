@@ -12,14 +12,19 @@ service:
 resources: {}
 
 env:
-  VITE_API_URL: "http://market-mind-backend:8000"
+  VITE_API_URL: "https://market-mind.stackedge.dev/api"
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  spec:
+    ingressClassName: nginx
   hosts:
-    - host: frontend.local
+    - host: market-mind.stackedge.dev
       paths:
-        - path: /
+        - path: /portfolio/market-mind/
           pathType: Prefix
-  tls: []
+  tls:
+    - hosts:
+        - market-mind.stackedge.dev
+      secretName: market-mind-tls
+
