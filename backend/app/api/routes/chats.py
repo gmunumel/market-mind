@@ -19,13 +19,13 @@ from app.schemas import (
 )
 from app.services import AgentService
 
-router = APIRouter(prefix="/api/chats")
+router = APIRouter(prefix="/chats")
 
 settings = get_settings()
 agent_service = AgentService(settings=settings)
 
 
-@router.get("/", response_model=list[ChatSessionResponse])
+@router.get("", response_model=list[ChatSessionResponse])
 def list_chats(db: Session = Depends(get_db)) -> list[ChatSessionResponse]:
     print("Listing chat sessions")
     repo = ChatRepository(db)
@@ -33,7 +33,7 @@ def list_chats(db: Session = Depends(get_db)) -> list[ChatSessionResponse]:
 
 
 @router.post(
-    "/", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED
+    "", response_model=ChatSessionResponse, status_code=status.HTTP_201_CREATED
 )
 def create_chat(
     payload: ChatSessionCreate,
