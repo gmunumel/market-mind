@@ -1,0 +1,64 @@
+{{- if .Values.cleanup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "market-mind-backend.fullname" . }}-cleanup
+  labels:
+    {{- include "market-mind-backend.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanup.schedule | quote }}
+  concurrencyPolicy: {{ .Values.cleanup.concurrencyPolicy | default "Forbid" }}
+  successfulJobsHistoryLimit: {{ .Values.cleanup.successfulJobsHistoryLimit | default 1 }}
+  failedJobsHistoryLimit: {{ .Values.cleanup.failedJobsHistoryLimit | default 1 }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "market-mind-backend.labels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: purge-chats
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - uv
+                - run
+                - python
+                - -m
+                - app.scripts.purge_chats
+              {{- if .Values.cleanup.olderThanHours }}
+              args:
+                - "--older-than-hours"
+                - "{{ .Values.cleanup.olderThanHours }}"
+              {{- end }}
+              envFrom:
+                - configMapRef:
+                    name: {{ include "market-mind-backend.fullname" . }}-config
+                - secretRef:
+                    name: {{ if .Values.existingSecretName }}{{ .Values.existingSecretName }}{{ else }}{{ include "market-mind-backend.fullname" . }}-secrets{{ end }}
+              env:
+                {{- if .Values.postgres.enabled }}
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "market-mind-backend.fullname" . }}-postgres
+                      key: POSTGRES_DB
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "market-mind-backend.fullname" . }}-postgres
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "market-mind-backend.fullname" . }}-postgres
+                      key: POSTGRES_PASSWORD
+                - name: DATABASE_URL
+                  value: >-
+                    postgresql+psycopg://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@{{ include "market-mind-backend.fullname" . }}-postgres:{{ .Values.postgres.port }}/{{ .Values.postgres.database }}
+                {{- end }}
+              resources:
+                {{- toYaml (.Values.cleanup.resources | default dict) | nindent 16 }}
+{{- end }}

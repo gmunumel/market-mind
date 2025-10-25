@@ -185,6 +185,18 @@ The backend chart provisions a persistent volume for Chroma. Point `DATABASE_URL
 - **Langfuse**: configure `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY`, and `LANGFUSE_HOST` (default cloud endpoint) to enable tracing. Without credentials the backend gracefully disables Langfuse calls.
 - **Rate limiting**: defaults to 60 requests/hour and 500 requests/day per `X-User-Id`. Override with `HOURLY_REQUEST_LIMIT` / `DAILY_REQUEST_LIMIT`.
 
+## Chat retention / cleanup
+
+- Run `uv run python -m app.scripts.purge_chats --older-than-hours 24` locally or in CI to wipe chats older than a day (omit the flag to delete everything).
+- Enable the automated cleanup CronJob in the backend Helm chart by setting:
+  ```yaml
+  cleanup:
+    enabled: true
+    schedule: "0 3 * * *"   # UTC time to run
+    olderThanHours: 24
+  ```
+  This reuses the backend image to execute the purge script inside the cluster once per schedule.
+
 ## Next steps
 
 - Integrate authenticated user IDs to align rate limits with your identity provider.

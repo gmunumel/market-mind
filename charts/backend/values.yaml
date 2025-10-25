@@ -85,3 +85,12 @@ ingress:
     - hosts:
         - market-mind.stackedge.dev
       secretName: market-mind-tls
+
+cleanup:
+  enabled: false
+  schedule: "0 3 * * *"
+  olderThanHours: 24
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  resources: {}
